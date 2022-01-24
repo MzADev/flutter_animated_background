@@ -28,6 +28,8 @@ class ParticleOptions {
   /// The color used by the particle. It is mutually exclusive with [image].
   final Color baseColor;
 
+  final List<Color> colors;
+
   /// The minimum radius of a spawned particle. Changing this value should cause
   /// the particles to update, in case their current radius is smaller than the
   /// new value. The concrete effects depends on the instance of
@@ -75,6 +77,7 @@ class ParticleOptions {
   const ParticleOptions({
     this.image,
     this.baseColor = Colors.black,
+    this.colors = const [Colors.black],
     this.spawnMinRadius = 1.0,
     this.spawnMaxRadius = 10.0,
     this.spawnMinSpeed = 150.0,
@@ -104,6 +107,7 @@ class ParticleOptions {
   ParticleOptions copyWith({
     Image? image = const _NotSetImage(),
     Color? baseColor,
+    List<Color>? colors,
     double? spawnMinRadius,
     double? spawnMaxRadius,
     double? spawnMinSpeed,
@@ -117,6 +121,7 @@ class ParticleOptions {
     return ParticleOptions(
       image: image is _NotSetImage ? this.image : image,
       baseColor: baseColor ?? this.baseColor,
+      colors: colors ?? this.colors,
       spawnMinRadius: spawnMinRadius ?? this.spawnMinRadius,
       spawnMaxRadius: spawnMaxRadius ?? this.spawnMaxRadius,
       spawnMinSpeed: spawnMinSpeed ?? this.spawnMinSpeed,
@@ -158,12 +163,14 @@ class Particle {
   /// The target alpha of this particle.
   double targetAlpha = 0.0;
 
+  Color color;
+
   /// Dynamic data that can be used by [ParticleBehaviour] classes to store
   /// other information related to the particles.
   dynamic data;
 
   /// Constructs a new [Particle] with its default values.
-  Particle();
+  Particle({this.color = Colors.black});
 
   /// Gets the square of the speed of this particle.
   double get speedSqr => dx * dx + dy * dy;
@@ -305,7 +312,7 @@ abstract class ParticleBehaviour extends Behaviour {
     final Canvas canvas = context.canvas;
     for (Particle particle in particles!) {
       if (particle.alpha == 0.0) continue;
-      _paint!.color = options.baseColor.withOpacity(particle.alpha);
+      _paint!.color = particle.color.withOpacity(particle.alpha);
 
       if (_particleImage != null) {
         Rect dst = Rect.fromLTRB(
@@ -331,7 +338,9 @@ abstract class ParticleBehaviour extends Behaviour {
   @protected
   List<Particle> generateParticles(int numParticles) {
     return List.generate(numParticles, (i) => i).map((i) {
-      Particle p = Particle();
+      Particle p = Particle(
+          color:
+              (i < options.colors.length) ? options.colors[i] : Colors.black);
       initParticle(p);
       return p;
     }).toList();
